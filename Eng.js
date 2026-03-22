@@ -2,7 +2,7 @@
  * Plant Transfer Calendar Web Application
  * NOTE: Replace APPS_SCRIPT_URL with your actual published Google Apps Script Web App URL
  */
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwf1X0ovPIOGHAixl_MUxOf9cnOnlv70C44KsaQAiPYzC7brzTI7Xyqf2MTWsgISuPJAw/exec"; 
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyqm07HvfEj7RPmKG2d2qs5gNTQH23M1krMLiyaa9osX2vAIGa6hiIvC-dXE4ApGSfKBA/exec"; 
 
 // State Management
 let currentDate = new Date(); // Represents the currently viewed month
@@ -20,7 +20,10 @@ const loginPassInput = document.getElementById("login-pass");
 const btnLogin = document.getElementById("btn-login");
 const btnLogout = document.getElementById("btn-logout");
 const loginError = document.getElementById("login-error");
-const userBadge = document.getElementById("user-badge");
+const btnUserProfile = document.getElementById("btn-user-profile");
+const userProfileModal = document.getElementById("user-profile-modal");
+const closeProfileModal = document.getElementById("close-profile-modal");
+const userProfileDetails = document.getElementById("user-profile-details");
 const calendarDaysEl = document.getElementById("calendar-days");
 const monthYearEl = document.getElementById("current-month-year");
 const prevBtn = document.getElementById("prev-month");
@@ -71,8 +74,28 @@ btnLogin.addEventListener("click", async () => {
                 loginOverlay.classList.remove("active");
                 appContainer.style.display = "flex";
                 
-                // Set User Badge
-                userBadge.innerHTML = `<svg width="16" height="16" style="vertical-align: middle; margin-right: 4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> ${user.Name || user.IDRec} (${user.Status})`;
+                // Show User Profile Button
+                btnUserProfile.style.display = "flex";
+                
+                // Prepare Profile Details
+                userProfileDetails.innerHTML = `
+                    <div style="display: grid; grid-template-columns: 120px 1fr; gap: 0.5rem; margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">
+                        <span style="font-weight: 500;">IDRec:</span>
+                        <span>${user.IDRec || "-"}</span>
+                        
+                        <span style="font-weight: 500;">Name:</span>
+                        <span>${user.Name || "-"}</span>
+                        
+                        <span style="font-weight: 500;">หน่วยงาน:</span>
+                        <span>${user["หน่วยงาน"] || user.Unit || "-"}</span>
+                        
+                        <span style="font-weight: 500;">Plant:</span>
+                        <span>${user.Plant || "-"}</span>
+                        
+                        <span style="font-weight: 500;">Status:</span>
+                        <span style="color: ${String(user.Status).toLowerCase() === 'admin' ? '#fde047' : '#93c5fd'}; font-weight: 600;">${user.Status || "-"}</span>
+                    </div>
+                `;
                 
                 // Init data fetch
                 init();
@@ -94,10 +117,23 @@ btnLogin.addEventListener("click", async () => {
     }
 });
 
+btnUserProfile.addEventListener("click", () => {
+    userProfileModal.classList.add("active");
+});
+
+closeProfileModal.addEventListener("click", () => {
+    userProfileModal.classList.remove("active");
+});
+window.addEventListener("click", (e) => {
+    if (e.target === userProfileModal) userProfileModal.classList.remove("active");
+});
+
 btnLogout.addEventListener("click", () => {
     logUserAction("Logout", "User logged out.");
     currentUser = null;
     appContainer.style.display = "none";
+    userProfileModal.classList.remove("active");
+    btnUserProfile.style.display = "none";
     loginOverlay.classList.add("active");
     loginUserInput.value = "";
     loginPassInput.value = "";

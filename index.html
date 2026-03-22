@@ -31,7 +31,12 @@
         </div>
     </div>
 
-    <div class="app-container" id="app-container" style="display: none;">
+    <div class="app-container" id="app-container" style="display: none; position: relative;">
+        <!-- Top Right Absolute User Button -->
+        <button class="icon-btn" id="btn-user-profile" title="User Profile" style="display: none; position: fixed; top: 16px; right: 16px; z-index: 1000; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; width: 44px; height: 44px; cursor: pointer; color: white; align-items: center; justify-content: center; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.2); backdrop-filter: blur(8px);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        </button>
+
         <!-- Header Section -->
         <header class="app-header">
             <div class="header-content">
@@ -41,8 +46,6 @@
                 </div>
                 <!-- Actions and Status -->
                 <div class="header-actions" style="display: flex; align-items: center; gap: 1rem;">
-                    <div id="user-badge" class="user-badge" style="font-weight: 500; color: var(--text-secondary);"></div>
-                    <button class="btn btn-secondary" id="btn-logout" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">Logout</button>
                     <div id="connection-status" class="status-indicator">
                         <span class="status-dot warning"></span>
                         <span class="status-text">Fetching data...</span>
@@ -119,6 +122,29 @@
             <div class="alert-actions" id="alert-actions">
                 <button class="btn btn-primary" id="alert-ok-btn">ตกลง (OK)</button>
                 <button class="btn btn-danger hidden" id="alert-cancel-btn">ยกเลิก (Cancel)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profile Modal -->
+    <div id="user-profile-modal" class="modal" style="z-index: 2000;">
+        <div class="modal-content glass-card slide-up" style="max-width: 400px; padding: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="margin: 0; color: white; display: flex; align-items: center; gap: 0.5rem; font-size: 1.25rem;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    User Profile
+                </h3>
+                <button class="icon-btn" id="close-profile-modal" style="background: none; border: none; color: var(--text-secondary); cursor: pointer;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <div id="user-profile-details" style="display: flex; flex-direction: column; gap: 1rem; color: var(--text-secondary); font-size: 0.95rem;">
+                <!-- Injected via JS -->
+            </div>
+            
+            <div style="margin-top: 2rem; display: flex; justify-content: center;">
+                <button class="btn btn-secondary" id="btn-logout" style="width: 100%; border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171;">Logout</button>
             </div>
         </div>
     </div>
