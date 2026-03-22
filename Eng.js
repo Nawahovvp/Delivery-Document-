@@ -25,6 +25,7 @@ const userProfileModal = document.getElementById("user-profile-modal");
 const closeProfileModal = document.getElementById("close-profile-modal");
 const userProfileDetails = document.getElementById("user-profile-details");
 const calendarDaysEl = document.getElementById("calendar-days");
+const btnExport = document.getElementById("btn-export");
 const monthYearEl = document.getElementById("current-month-year");
 const prevBtn = document.getElementById("prev-month");
 const nextBtn = document.getElementById("next-month");
@@ -74,8 +75,9 @@ btnLogin.addEventListener("click", async () => {
                 loginOverlay.classList.remove("active");
                 appContainer.style.display = "flex";
                 
-                // Show User Profile Button
+                // Show User Profile Button & Export Button
                 btnUserProfile.style.display = "flex";
+                if (btnExport) btnExport.style.display = "inline-flex";
                 
                 // Prepare Profile Details
                 userProfileDetails.innerHTML = `
@@ -134,10 +136,60 @@ btnLogout.addEventListener("click", () => {
     appContainer.style.display = "none";
     userProfileModal.classList.remove("active");
     btnUserProfile.style.display = "none";
+    if (btnExport) btnExport.style.display = "none";
     loginOverlay.classList.add("active");
     loginUserInput.value = "";
     loginPassInput.value = "";
     loginError.classList.add("hidden");
+});
+
+// Export CSV Logic
+btnExport.addEventListener("click", () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    
+    // Create CSV content
+    const BOM = "\uFEFF"; // For UTF-8 Excel compatibility
+    let csvContent = BOM + "Date,Plant,Delivery Number,Scrap Number\n";
+    
+    // Filter bookings for the current month that have data
+    const monthBookings = bookings.filter(b => {
+        if (!b.deliveryNumber && !b.scrapNumber) return false;
+        
+        const dateObj = parseDateStr(b.date);
+        if (!dateObj) return false;
+        
+        return dateObj.getFullYear() === year && dateObj.getMonth() === month;
+    });
+    
+    if (monthBookings.length === 0) {
+        showCustomAlert("ไม่มีข้อมูล", "ไม่พบข้อมูลการจองในเดือนนี้ที่จะให้ Export ครับ", "warning");
+        return;
+    }
+    
+    monthBookings.forEach(b => {
+        const dVal = b.deliveryNumber || "-";
+        const sVal = b.scrapNumber || "-";
+        const row = [
+            `"${b.date}"`,
+            `"${b.plant}"`,
+            `"${dVal}"`,
+            `"${sVal}"`
+        ];
+        csvContent += row.join(",") + "\n";
+    });
+    
+    // Create Blob and trigger download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Plant_Bookings_${year}_${String(month + 1).padStart(2, '0')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    logUserAction("Export CSV", `Exported data for ${year}-${String(month + 1).padStart(2, '0')}`);
 });
 
 // Initialize
@@ -290,6 +342,10 @@ function renderCalendar() {
                 btn.textContent = `✓ ${displayName}`;
             } else {
                 btn.textContent = `+ ${displayName}`;
+                // Add pulsing dot for missing data
+                const dot = document.createElement("div");
+                dot.classList.add("pulse-dot");
+                btn.appendChild(dot);
             }
             
             btn.addEventListener("click", (e) => {

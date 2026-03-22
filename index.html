@@ -17,11 +17,11 @@
                 <p>Please login to access the Calendar</p>
             </div>
             <div class="form-group">
-                <label>Username (รหัสพนักงาน/IDRec)</label>
+                <label>Username</label>
                 <input type="text" id="login-user" placeholder="Enter your ID...">
             </div>
             <div class="form-group">
-                <label>Password (เลข 4 ตัวท้าย)</label>
+                <label>Password</label>
                 <input type="password" id="login-pass" placeholder="Enter password...">
             </div>
             <div class="login-actions">
@@ -32,14 +32,9 @@
     </div>
 
     <div class="app-container" id="app-container" style="display: none; position: relative;">
-        <!-- Top Right Absolute User Button -->
-        <button class="icon-btn" id="btn-user-profile" title="User Profile" style="display: none; position: fixed; top: 16px; right: 16px; z-index: 1000; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; width: 44px; height: 44px; cursor: pointer; color: white; align-items: center; justify-content: center; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.2); backdrop-filter: blur(8px);">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-        </button>
-
         <!-- Header Section -->
         <header class="app-header">
-            <div class="header-content">
+            <div class="header-content" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <div class="header-titles">
                     <h1>Plant Transfer Bookings</h1>
                     <p class="subtitle">Manage delivery and scrap reservations</p>
@@ -49,6 +44,14 @@
                     <div id="connection-status" class="status-indicator">
                         <span class="status-dot warning"></span>
                         <span class="status-text">Fetching data...</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                        <button class="icon-btn" id="btn-user-profile" title="User Profile" style="display: none; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; width: 44px; height: 44px; cursor: pointer; color: var(--text-primary); flex-shrink: 0; align-items: center; justify-content: center; transition: all 0.2s;">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        </button>
+                        <button class="icon-btn" id="btn-export" title="Export CSV" style="display: none; background: rgba(167, 139, 250, 0.15); border: 1px solid rgba(167, 139, 250, 0.3); border-radius: 50%; width: 40px; height: 40px; cursor: pointer; color: #a78bfa; flex-shrink: 0; align-items: center; justify-content: center; transition: all 0.2s;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        </button>
                     </div>
                 </div>
             </div>
