@@ -481,27 +481,37 @@ body {
 }
 
 .btn {
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    font-weight: 500;
-    font-size: 0.875rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 10px;
+    font-weight: 600;
     cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     border: none;
-    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn:active {
+    transform: scale(0.95);
 }
 
 .btn-primary {
     background: var(--accent);
     color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .btn-primary:hover {
     background: var(--accent-hover);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
 }
 
 .btn-danger {
-    background: transparent;
+    background: rgba(239, 68, 68, 0.1);
     border: 1px solid var(--accent-danger);
     color: var(--accent-danger);
 }
@@ -509,6 +519,33 @@ body {
 .btn-danger:hover {
     background: var(--accent-danger);
     color: white;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Loading State for Buttons */
+.btn-loading {
+    pointer-events: none;
+    opacity: 0.8;
+    color: transparent !important;
+}
+
+.btn-loading::after {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    top: 50%;
+    left: 50%;
+    margin-top: -9px;
+    margin-left: -9px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin-btn 0.6s linear infinite;
+}
+
+@keyframes spin-btn {
+    to { transform: rotate(360deg); }
 }
 
 /* Animations */

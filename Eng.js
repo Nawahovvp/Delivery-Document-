@@ -515,8 +515,8 @@ function renderPlantForm(plantObj, dateStr) {
         </div>
         
         <div class="plant-actions">
-            ${existing ? `<button type="button" class="btn btn-danger" onclick="handleDelete('${formId}')">Delete</button>` : ''}
-            <button type="button" class="btn btn-primary" onclick="handleSave('${plantName}', '${formId}')">Save</button>
+            ${existing ? `<button type="button" class="btn btn-danger" onclick="handleDelete('${formId}', this)">Delete</button>` : ''}
+            <button type="button" class="btn btn-primary" onclick="handleSave('${plantName}', '${formId}', this)">Save</button>
         </div>
     `;
     
@@ -531,7 +531,8 @@ window.addEventListener("click", (e) => {
 });
 
 // API Interactions (Save, Delete)
-async function handleSave(plantName, existingId) {
+async function handleSave(plantName, existingId, btn) {
+    if (btn) btn.classList.add("btn-loading");
     const dVal = document.getElementById(`deliv-${plantName}`).value.trim();
     const sVal = document.getElementById(`scrap-${plantName}`).value.trim();
     
@@ -547,6 +548,7 @@ async function handleSave(plantName, existingId) {
         return;
     }
     if (!dVal && !sVal) {
+        if (btn) btn.classList.remove("btn-loading");
         await showCustomAlert("ข้อมูลไม่ครบถ้วน", "กรุณากรอกข้อมูลอย่างน้อย 1 ช่องเพื่อบันทึกครับ", "warning");
         return;
     }
@@ -571,6 +573,7 @@ async function handleSave(plantName, existingId) {
         }
         renderCalendar();
         openModal(new Date(selectedDateStr), getActivePlantsForDate(new Date(selectedDateStr), new Date(selectedDateStr).getDay() + 1), selectedDateStr);
+        if (btn) btn.classList.remove("btn-loading");
         return;
     }
     
@@ -609,11 +612,13 @@ async function handleSave(plantName, existingId) {
             await showCustomAlert("สำเร็จ", "บันทึกข้อมูลเรียบร้อยแล้ว!", "success");
             modal.classList.remove("active");
         } else {
+            if (btn) btn.classList.remove("btn-loading");
             await showCustomAlert("เกิดข้อผิดพลาด", resData.message, "error");
             updateConnectionStatus("Error saving", "error");
         }
     } catch (e) {
         console.error(e);
+        if (btn) btn.classList.remove("btn-loading");
         updateConnectionStatus("Request failed", "error");
     }
 }
@@ -621,14 +626,17 @@ async function handleSave(plantName, existingId) {
 // Ensure function is attached to window so inline onclick works
 window.handleSave = handleSave;
 
-async function handleDelete(id) {
+async function handleDelete(id, btn) {
     const isConfirm = await showCustomConfirm("ยืนยันการลบ", "คุณต้องการลบข้อมูลการจองนี้ใช่หรือไม่?");
     if (!isConfirm) return;
+    
+    if (btn) btn.classList.add("btn-loading");
     
     if (APPS_SCRIPT_URL === "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
         updateConnectionStatus("Mock Delete Success!", "success");
         bookings = bookings.filter(b => b.id !== id);
         renderCalendar();
+        if (btn) btn.classList.remove("btn-loading");
         modal.classList.remove("active");
         return;
     }
@@ -654,11 +662,13 @@ async function handleDelete(id) {
             await showCustomAlert("สำเร็จ", "ลบข้อมูลเรียบร้อยแล้ว!", "success");
             modal.classList.remove("active");
         } else {
+            if (btn) btn.classList.remove("btn-loading");
             await showCustomAlert("เกิดข้อผิดพลาด", resData.message, "error");
             updateConnectionStatus("Error deleting", "error");
         }
     } catch (e) {
         console.error(e);
+        if (btn) btn.classList.remove("btn-loading");
         updateConnectionStatus("Request failed", "error");
     }
 }
