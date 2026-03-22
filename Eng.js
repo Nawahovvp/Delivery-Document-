@@ -26,6 +26,18 @@ const closeProfileModal = document.getElementById("close-profile-modal");
 const userProfileDetails = document.getElementById("user-profile-details");
 const calendarDaysEl = document.getElementById("calendar-days");
 const btnExport = document.getElementById("btn-export");
+const rememberMeCheckbox = document.getElementById("remember-me");
+
+// Pre-fill credentials if "Remember Me" was checked
+window.addEventListener("DOMContentLoaded", () => {
+    const savedUser = localStorage.getItem("transfer_rem_user");
+    const savedPass = localStorage.getItem("transfer_rem_pass");
+    if (savedUser && savedPass) {
+        if (loginUserInput) loginUserInput.value = savedUser;
+        if (loginPassInput) loginPassInput.value = savedPass;
+        if (rememberMeCheckbox) rememberMeCheckbox.checked = true;
+    }
+});
 const monthYearEl = document.getElementById("current-month-year");
 const prevBtn = document.getElementById("prev-month");
 const nextBtn = document.getElementById("next-month");
@@ -70,6 +82,15 @@ btnLogin.addEventListener("click", async () => {
             if (password === expectedPassword) {
                 // Success!
                 currentUser = user;
+                
+                // Handle "Remember Me"
+                if (rememberMeCheckbox && rememberMeCheckbox.checked) {
+                    localStorage.setItem("transfer_rem_user", username);
+                    localStorage.setItem("transfer_rem_pass", password);
+                } else {
+                    localStorage.removeItem("transfer_rem_user");
+                    localStorage.removeItem("transfer_rem_pass");
+                }
                 
                 // Show App
                 loginOverlay.classList.remove("active");
