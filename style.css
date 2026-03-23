@@ -252,10 +252,20 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: left;
-    display: block;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     width: 100%;
     position: relative;
+    gap: 0.25rem;
 }
+
+.btn-printer-icon {
+    opacity: 0.7;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
 
 .pulse-dot {
     position: absolute;
