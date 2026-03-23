@@ -2,7 +2,7 @@
  * Plant Transfer Calendar Web Application
  * NOTE: Replace APPS_SCRIPT_URL with your actual published Google Apps Script Web App URL
  */
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyqm07HvfEj7RPmKG2d2qs5gNTQH23M1krMLiyaa9osX2vAIGa6hiIvC-dXE4ApGSfKBA/exec"; 
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhSd1MedWS8eznGqZMoNx1MCsfoHNVW33PCEAuWx69Kd0DluAZf6pDIt6mONt7mRLBuA/exec"; 
 
 // State Management
 let currentDate = new Date(); // Represents the currently viewed month
@@ -49,6 +49,8 @@ const noPlantsMsg = document.getElementById("no-plants-msg");
 const bookingsForm = document.getElementById("bookings-form");
 const plantsFormsContainer = document.getElementById("plants-forms-container");
 const connectionStatus = document.getElementById("connection-status");
+const printSwitchContainer = document.getElementById("print-switch-container");
+const printToggle = document.getElementById("print-toggle");
 const statusDot = connectionStatus.querySelector(".status-dot");
 const statusText = connectionStatus.querySelector(".status-text");
 
@@ -276,7 +278,8 @@ async function fetchData() {
             plant: String(b.Plant || b.plant || ""),
             deliveryNumber: String(b.DeliveryNumber || b.deliverynumber || ""),
             scrapNumber: String(b.ScrapNumber || b.scrapnumber || ""),
-            timestamp: String(b.Timestamp || b.timestamp || "")
+            timestamp: String(b.Timestamp || b.timestamp || ""),
+            status: String(b.Status || b.status || "")
         }));
         
         updateConnectionStatus("Data Loaded (OpenSheet API)", "success");
@@ -359,7 +362,13 @@ function renderCalendar() {
             const displayName = formatDisplayName(plantObj);
             
             if (hasBooking) {
-                btn.classList.add("success");
+                // Determine color based on status
+                if (hasBooking.status === "Print") {
+                    btn.classList.add("success"); // Green
+                } else if (hasBooking.deliveryNumber && hasBooking.scrapNumber) {
+                    btn.classList.add("warning"); // Orange
+                }
+                
                 btn.textContent = `✓ ${displayName}`;
             } else {
                 btn.textContent = `+ ${displayName}`;
@@ -504,8 +513,115 @@ function openModal(dateObj, activePlants, dateStr) {
         activePlants.forEach(plantObj => renderPlantForm(plantObj, dateStr));
     }
     
+    // Print Switch Logic
+    updatePrintSwitch(activePlants, dateStr);
+    
     modal.classList.add("active");
 }
+
+function updatePrintSwitch(activePlants, dateStr) {
+    if (!printSwitchContainer || !printToggle) return;
+    
+    // Check if at least one plant in the view has existing data
+    const plantsWithData = activePlants.filter(p => 
+        bookings.some(b => b.date === dateStr && b.plant === p.plant && (b.deliveryNumber || b.scrapNumber))
+    );
+    
+    if (plantsWithData.length > 0) {
+        printSwitchContainer.classList.remove("hidden");
+        // Set state: If all plants with data are marked as "Print", set toggle ON
+        const allPrinted = plantsWithData.every(p => {
+            const b = bookings.find(bk => bk.date === dateStr && bk.plant === p.plant);
+            return b && b.status === "Print";
+        });
+        printToggle.checked = allPrinted;
+        printToggle.disabled = false;
+    } else {
+        printSwitchContainer.classList.add("hidden");
+        printToggle.checked = false;
+        printToggle.disabled = true;
+    }
+}
+
+// Handle Print Toggle change
+printToggle.addEventListener("change", async () => {
+    const isChecked = printToggle.checked;
+    const statusVal = isChecked ? "Print" : "";
+    
+    // Add confirmation if toggling ON
+    if (isChecked) {
+        const isConfirm = await showCustomConfirm("ยืนยันการ Print", "คุณต้องการบันทึกข้อมูล Print ไปยัง Google Sheet ใช่หรือไม่?");
+        if (!isConfirm) {
+            printToggle.checked = false; // Revert
+            return;
+        }
+    }
+    
+    // Find plants in the current view that have existing data
+    const plantsToUpdate = masterPlants.filter(p => 
+        bookings.some(b => b.date === selectedDateStr && b.plant === p.plant && (b.deliveryNumber || b.scrapNumber))
+    ).filter(p => {
+        // If the view was opened for specific plants, only update those
+        // We can check if they are in the DOM or just use the current modal state
+        // For simplicity, we'll update all plants active for this date that HAVE bookings
+        // but better to only update what's currently in the modal.
+        // Let's get the names from the modal cards.
+        return document.getElementById(`deliv-${p.plant}`) !== null;
+    });
+
+    if (plantsToUpdate.length === 0) return;
+    
+    updateConnectionStatus("Updating Print status...", "warning");
+    printToggle.disabled = true;
+    
+    try {
+        const results = await Promise.all(plantsToUpdate.map(async p => {
+            const existing = bookings.find(b => b.date === selectedDateStr && b.plant === p.plant);
+            const payload = {
+                id: existing.id,
+                date: selectedDateStr,
+                plant: p.plant,
+                deliveryNumber: existing.deliveryNumber,
+                scrapNumber: existing.scrapNumber,
+                status: statusVal
+            };
+            
+            if (APPS_SCRIPT_URL === "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+                existing.status = statusVal;
+                return { status: "success" };
+            }
+            
+            const payloadStr = encodeURIComponent(JSON.stringify(payload));
+            const response = await fetch(`${APPS_SCRIPT_URL}?action=saveBooking&payload=${payloadStr}`, {
+                method: 'GET'
+            });
+            return await response.json();
+        }));
+        
+        const allSuccess = results.every(r => r.status === "success");
+        if (allSuccess) {
+            updateConnectionStatus("Print status updated", "success");
+            // Update local state if not already done in mock
+            if (APPS_SCRIPT_URL !== "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+                plantsToUpdate.forEach(p => {
+                    const idx = bookings.findIndex(b => b.date === selectedDateStr && b.plant === p.plant);
+                    if (idx !== -1) bookings[idx].status = statusVal;
+                });
+            }
+            renderCalendar();
+            logUserAction("Update Print Status", `Set to ${statusVal || 'None'} for ${plantsToUpdate.length} plants`);
+        } else {
+            updateConnectionStatus("Some updates failed", "error");
+            printToggle.checked = !isChecked; // Revert
+        }
+    } catch (e) {
+        console.error(e);
+        updateConnectionStatus("Update failed", "error");
+        printToggle.checked = !isChecked; // Revert
+    } finally {
+        printToggle.disabled = false;
+    }
+});
 
 function renderPlantForm(plantObj, dateStr) {
     const plantName = plantObj.plant;
