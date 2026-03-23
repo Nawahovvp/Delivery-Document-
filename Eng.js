@@ -53,6 +53,7 @@ const printSwitchContainer = document.getElementById("print-switch-container");
 const printToggle = document.getElementById("print-toggle");
 const statusDot = connectionStatus.querySelector(".status-dot");
 const statusText = connectionStatus.querySelector(".status-text");
+const successOverlay = document.getElementById("success-animation-overlay");
 
 // Handle Login
 btnLogin.addEventListener("click", async () => {
@@ -610,6 +611,11 @@ printToggle.addEventListener("change", async () => {
             }
             renderCalendar();
             logUserAction("Update Print Status", `Set to ${statusVal || 'None'} for ${plantsToUpdate.length} plants`);
+            
+            // Trigger animation if turned ON
+            if (isChecked) {
+                showSuccessAnimation();
+            }
         } else {
             updateConnectionStatus("Some updates failed", "error");
             printToggle.checked = !isChecked; // Revert
@@ -892,6 +898,45 @@ function logUserAction(actionType, details) {
         fetch(`${APPS_SCRIPT_URL}?action=logAction&payload=${payloadStr}`, { method: 'GET' })
             .catch(e => console.error("Logging error", e));
     } catch(e) {}
+}
+
+function showSuccessAnimation() {
+    if (!successOverlay) return;
+    
+    const confettiContainer = successOverlay.querySelector('.confetti-container');
+    confettiContainer.innerHTML = '';
+    
+    // Create confetti particles
+    const colors = ['#34d399', '#3b82f6', '#fbbf24', '#f87171', '#a78bfa'];
+    for (let i = 0; i < 40; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'confetti-particle';
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = 50 + Math.random() * 150;
+        const dx = Math.cos(angle) * velocity + 'px';
+        const dy = Math.sin(angle) * velocity + 'px';
+        
+        particle.style.backgroundColor = color;
+        particle.style.left = '50%';
+        particle.style.top = '50%';
+        particle.style.setProperty('--dx', dx);
+        particle.style.setProperty('--dy', dy);
+        particle.style.animationDelay = Math.random() * 0.5 + 's';
+        
+        confettiContainer.appendChild(particle);
+    }
+    
+    successOverlay.classList.remove('hidden');
+    
+    // Auto hide after animation
+    setTimeout(() => {
+        successOverlay.style.opacity = '0';
+        setTimeout(() => {
+            successOverlay.classList.add('hidden');
+            successOverlay.style.opacity = '1';
+        }, 500);
+    }, 2500);
 }
 
 // Application is initialized after successful login via btnLogin.addEventListener
