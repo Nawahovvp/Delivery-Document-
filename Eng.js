@@ -273,15 +273,21 @@ async function fetchData() {
         }
         masterPlants = tempPlants;
         
-        bookings = bookingsData.map(b => ({
-            id: String(b.ID || b.id || ""),
-            date: String(b.Date || b.date || ""),
-            plant: String(b.Plant || b.plant || ""),
-            deliveryNumber: String(b.DeliveryNumber || b.deliverynumber || ""),
-            scrapNumber: String(b.ScrapNumber || b.scrapnumber || ""),
-            timestamp: String(b.Timestamp || b.timestamp || ""),
-            status: String(b.Status || b.status || "")
-        }));
+        bookings = bookingsData.map(b => {
+            const rawDate = String(b.Date || b.date || "");
+            const parsedDate = parseDateStr(rawDate);
+            const normalizedDate = parsedDate && !isNaN(parsedDate.getTime()) ? formatDate(parsedDate) : rawDate;
+            
+            return {
+                id: String(b.ID || b.id || ""),
+                date: normalizedDate,
+                plant: String(b.Plant || b.plant || "").trim(),
+                deliveryNumber: String(b.DeliveryNumber || b.deliverynumber || ""),
+                scrapNumber: String(b.ScrapNumber || b.scrapnumber || ""),
+                timestamp: String(b.Timestamp || b.timestamp || ""),
+                status: String(b.Status || b.status || "")
+            };
+        });
         
         updateConnectionStatus("Data Loaded (OpenSheet API)", "success");
         renderCalendar(); // Re-render with real data
@@ -355,8 +361,17 @@ function renderCalendar() {
         
         const activePlantsForDay = getActivePlantsForDate(cellDate, dayOfWeek);
         
+        // ADDITION: Also include any plants that have a booking on this date
+        const dateBookings = bookings.filter(b => b.date === dateStr);
+        dateBookings.forEach(b => {
+            const plantObj = masterPlants.find(p => matchPlantNames(p.plant, b.plant));
+            if (plantObj && !activePlantsForDay.find(p => matchPlantNames(p.plant, b.plant))) {
+                activePlantsForDay.push(plantObj);
+            }
+        });
+        
         activePlantsForDay.forEach(plantObj => {
-            const hasBooking = bookings.find(b => b.date === dateStr && b.plant === plantObj.plant);
+            const hasBooking = bookings.find(b => b.date === dateStr && matchPlantNames(b.plant, plantObj.plant));
             const btn = document.createElement("button");
             btn.classList.add("plant-btn");
             
@@ -421,6 +436,14 @@ function parseDateStr(ds) {
 function formatDisplayName(plantObj) {
     if (!plantObj || !plantObj.plant) return "";
     return plantObj.plant.replace(/Stock\s*/i, "").trim();
+}
+
+/**
+ * Robustly compare two plant names, ignoring "Stock " prefix, case, and extra spaces
+ */
+function matchPlantNames(name1, name2) {
+    const clean = (s) => String(s || "").toLowerCase().replace(/Stock\s*/i, "").trim();
+    return clean(name1) === clean(name2);
 }
 
 // Logic to determine if a Plant is active on a given date
@@ -533,14 +556,14 @@ function updatePrintSwitch(activePlants, dateStr) {
     
     // Check if at least one plant in the view has existing data
     const plantsWithData = activePlants.filter(p => 
-        bookings.some(b => b.date === dateStr && b.plant === p.plant && (b.deliveryNumber || b.scrapNumber))
+        bookings.some(b => b.date === dateStr && matchPlantNames(b.plant, p.plant) && (b.deliveryNumber || b.scrapNumber))
     );
     
     if (plantsWithData.length > 0) {
         printSwitchContainer.classList.remove("hidden");
         // Set state: If all plants with data are marked as "Print", set toggle ON
         const allPrinted = plantsWithData.every(p => {
-            const b = bookings.find(bk => bk.date === dateStr && bk.plant === p.plant);
+            const b = bookings.find(bk => bk.date === dateStr && matchPlantNames(bk.plant, p.plant));
             return b && b.status === "Print";
         });
         printToggle.checked = allPrinted;
@@ -568,7 +591,7 @@ printToggle.addEventListener("change", async () => {
     
     // Find plants in the current view that have existing data
     const plantsToUpdate = masterPlants.filter(p => 
-        bookings.some(b => b.date === selectedDateStr && b.plant === p.plant && (b.deliveryNumber || b.scrapNumber))
+        bookings.some(b => b.date === selectedDateStr && matchPlantNames(b.plant, p.plant) && (b.deliveryNumber || b.scrapNumber))
     ).filter(p => {
         // If the view was opened for specific plants, only update those
         // We can check if they are in the DOM or just use the current modal state
@@ -585,7 +608,7 @@ printToggle.addEventListener("change", async () => {
     
     try {
         const results = await Promise.all(plantsToUpdate.map(async p => {
-            const existing = bookings.find(b => b.date === selectedDateStr && b.plant === p.plant);
+            const existing = bookings.find(b => b.date === selectedDateStr && matchPlantNames(b.plant, p.plant));
             const payload = {
                 id: existing.id,
                 date: selectedDateStr,
@@ -613,7 +636,7 @@ printToggle.addEventListener("change", async () => {
             // Update local state if not already done in mock
             if (APPS_SCRIPT_URL !== "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
                 plantsToUpdate.forEach(p => {
-                    const idx = bookings.findIndex(b => b.date === selectedDateStr && b.plant === p.plant);
+                    const idx = bookings.findIndex(b => b.date === selectedDateStr && matchPlantNames(b.plant, p.plant));
                     if (idx !== -1) bookings[idx].status = statusVal;
                 });
             }
