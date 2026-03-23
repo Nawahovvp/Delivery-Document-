@@ -102,6 +102,42 @@ body {
     animation: fadeIn 0.8s ease;
 }
 
+.plant-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 6px 10px;
+    margin-bottom: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    gap: 8px;
+}
+
+.plant-btn-icons {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.printer-icon, .edit-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.8;
+}
+
+.edit-icon {
+    color: #94a3b8;
+}
+
 .calendar-nav {
     display: flex;
     justify-content: space-between;

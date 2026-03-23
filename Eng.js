@@ -390,13 +390,26 @@ function renderCalendar() {
                 
                 btn.innerHTML = `<span>✓ ${displayName}</span>`;
                 
-                // Add Printer Icon if Status is not "Print"
+                const iconContainer = document.createElement("div");
+                iconContainer.classList.add("plant-btn-icons");
+                
+                // Add Edit Icon (Pencil) - Always show if has booking
+                const editIcon = document.createElement("div");
+                editIcon.classList.add("edit-icon");
+                editIcon.title = "แก้ไขข้อมูล";
+                editIcon.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+                iconContainer.appendChild(editIcon);
+
+                // Add Printer Icon - Only if status is NOT Print
                 if (hasBooking.status !== "Print") {
-                    const iconSpan = document.createElement("span");
-                    iconSpan.className = "btn-printer-icon";
-                    iconSpan.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>`;
-                    btn.appendChild(iconSpan);
+                    const printerIcon = document.createElement("div");
+                    printerIcon.classList.add("printer-icon");
+                    printerIcon.title = "ยังไม่ได้พิมพ์";
+                    printerIcon.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>`;
+                    iconContainer.appendChild(printerIcon);
                 }
+                
+                btn.appendChild(iconContainer);
             } else {
                 btn.innerHTML = `<span>+ ${displayName}</span>`;
                 // Add pulsing dot for missing data
@@ -697,6 +710,8 @@ function renderPlantForm(plantObj, dateStr) {
     const card = document.createElement("div");
     card.classList.add("plant-form-card");
     
+    const isReadOnly = existing ? "readonly" : "";
+    
     card.innerHTML = `
         <div class="plant-form-header">
             <h4><span class="plant-badge">${displayName}</span></h4>
@@ -704,17 +719,24 @@ function renderPlantForm(plantObj, dateStr) {
         
         <div class="form-group">
             <label>Delivery Reservation (เลขที่ใบจองรถ ส่งของ)</label>
-            <input type="text" id="deliv-${plantName}" value="${deliveryVal}" placeholder="Enter delivery reservation NO..." />
+            <input type="text" id="deliv-${plantName}" value="${deliveryVal}" ${isReadOnly} placeholder="Enter delivery reservation NO..." />
         </div>
         
         <div class="form-group">
             <label>Scrap Reservation (เลขที่รับซาก)</label>
-            <input type="text" id="scrap-${plantName}" value="${scrapVal}" placeholder="Enter scrap reservation NO..." />
+            <input type="text" id="scrap-${plantName}" value="${scrapVal}" ${isReadOnly} placeholder="Enter scrap reservation NO..." />
         </div>
         
-        <div class="plant-actions">
-            ${existing ? `<button type="button" class="btn btn-danger" onclick="handleDelete('${formId}', this)">Delete</button>` : ''}
-            <button type="button" class="btn btn-primary" onclick="handleSave('${plantName}', '${formId}', this)">Save</button>
+        <div class="plant-actions" id="actions-${plantName}">
+            ${existing ? `
+                <button type="button" class="btn btn-warning" onclick="toggleEditMode('${plantName}', this)">Edit</button>
+                <button type="button" class="btn btn-danger" onclick="handleDelete('${formId}', this)">Delete</button>
+                <button type="button" class="btn btn-secondary" onclick="closePlantModal()">Cancel</button>
+                <button type="button" class="btn btn-primary hidden" id="save-${plantName}" onclick="handleSave('${plantName}', '${formId}', this)">Save</button>
+            ` : `
+                <button type="button" class="btn btn-secondary" onclick="closePlantModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="handleSave('${plantName}', '${formId}', this)">Save</button>
+            `}
         </div>
     `;
     
@@ -725,7 +747,12 @@ closeBtn.addEventListener("click", () => {
     modal.classList.remove("active");
 });
 window.addEventListener("click", (e) => {
-    if (e.target === modal) modal.classList.remove("active");
+    // Disabled closing on overlay click to prevent accidental data loss
+    /*
+    if (e.target === modal) {
+        modal.classList.remove("active");
+    }
+    */
 });
 
 // API Interactions (Save, Delete)
@@ -751,12 +778,14 @@ async function handleSave(plantName, existingId, btn) {
         return;
     }
     
+    const existing = bookings.find(b => b.id === existingId && existingId !== "");
     const payload = {
         id: existingId,
         date: selectedDateStr,
         plant: plantName,
         deliveryNumber: dVal,
-        scrapNumber: sVal
+        scrapNumber: sVal,
+        status: existing ? existing.status : ""
     };
     
     if (APPS_SCRIPT_URL === "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
@@ -795,7 +824,8 @@ async function handleSave(plantName, existingId, btn) {
                 plant: plantName,
                 deliveryNumber: dVal,
                 scrapNumber: sVal,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                status: existing ? existing.status : ""
             };
             const idx = bookings.findIndex(b => b.id === payloadId);
             if (idx !== -1) {
@@ -823,6 +853,33 @@ async function handleSave(plantName, existingId, btn) {
 
 // Ensure function is attached to window so inline onclick works
 window.handleSave = handleSave;
+
+function toggleEditMode(plantName, editBtn) {
+    const delivInput = document.getElementById(`deliv-${plantName}`);
+    const scrapInput = document.getElementById(`scrap-${plantName}`);
+    const saveBtn = document.getElementById(`save-${plantName}`);
+    
+    if (delivInput && scrapInput) {
+        delivInput.removeAttribute("readonly");
+        scrapInput.removeAttribute("readonly");
+        delivInput.focus();
+        
+        // Visual feedback
+        delivInput.style.borderColor = "var(--accent)";
+        scrapInput.style.borderColor = "var(--accent)";
+        
+        if (saveBtn) saveBtn.classList.remove("hidden");
+        if (editBtn) editBtn.classList.add("hidden");
+    }
+}
+
+window.toggleEditMode = toggleEditMode;
+
+function closePlantModal() {
+    modal.classList.remove("active");
+}
+
+window.closePlantModal = closePlantModal;
 
 async function handleDelete(id, btn) {
     const isConfirm = await showCustomConfirm("ยืนยันการลบ", "คุณต้องการลบข้อมูลการจองนี้ใช่หรือไม่?");
