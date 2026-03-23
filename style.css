@@ -102,12 +102,94 @@ body {
     animation: fadeIn 0.8s ease;
 }
 
-.calendar-header {
+.calendar-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
+    gap: 1rem;
+    flex-wrap: wrap;
 }
+
+.search-container {
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 0.25rem 0.5rem;
+    min-width: 280px;
+    transition: all 0.3s ease;
+}
+
+.search-container:focus-within {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+}
+
+.search-container input {
+    background: none;
+    border: none;
+    color: white;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    width: 100%;
+    outline: none;
+}
+
+#btn-search-calendar {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: color 0.2s;
+}
+
+#btn-search-calendar:hover {
+    color: var(--accent);
+}
+
+.nav-controls {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.search-container-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.search-results-text {
+    font-size: 0.75rem;
+    color: var(--accent);
+    margin-left: 0.5rem;
+    height: 1rem;
+    font-weight: 500;
+}
+
+/* Search Highlight Animation - Nuclear Visibility */
+.plant-btn.search-highlight {
+    background: #ffffff !important; /* Pure White background */
+    color: #000000 !important; /* Black text */
+    border-color: #fbbf24 !important;
+    font-weight: 900 !important;
+    z-index: 9999 !important;
+    box-shadow: 0 0 30px #fbbf24, 0 0 60px #fbbf24, 0 0 0 1000px rgba(0,0,0,0.3) !important;
+    transform: scale(1.15) !important;
+    animation: nuclear-flash 0.5s infinite alternate !important;
+    pointer-events: auto;
+}
+
+@keyframes nuclear-flash {
+    0% { background: #fbbf24; box-shadow: 0 0 20px #fbbf24; }
+    100% { background: #ffffff; box-shadow: 0 0 50px #fbbf24; }
+}
+
+
+
 
 .calendar-header h2 {
     font-size: 1.5rem;

@@ -11,6 +11,7 @@ let masterPlants = []; // Data from 'PlantTranfer' sheet
 let bookings = []; // Data from 'Bookings' sheet
 let selectedDateStr = "";
 let currentUser = null; // Store logged-in user
+let currentSearchQuery = ""; // Current search filter for calendar
 
 // DOM Elements
 const loginOverlay = document.getElementById("login-overlay");
@@ -54,6 +55,8 @@ const printToggle = document.getElementById("print-toggle");
 const statusDot = connectionStatus.querySelector(".status-dot");
 const statusText = connectionStatus.querySelector(".status-text");
 const successOverlay = document.getElementById("success-animation-overlay");
+const calendarSearch = document.getElementById("calendar-search");
+const btnSearchCalendar = document.getElementById("btn-search-calendar");
 
 // Handle Login
 btnLogin.addEventListener("click", async () => {
@@ -400,6 +403,27 @@ function renderCalendar() {
                 const dot = document.createElement("div");
                 dot.classList.add("pulse-dot");
                 btn.appendChild(dot);
+            }
+            
+            // Re-apply search highlight if matches
+            if (currentSearchQuery) {
+                const cleanQuery = currentSearchQuery.toLowerCase().replace(/Stock\s*/i, "").trim();
+                const cleanPlant = plantObj.plant.toLowerCase().replace(/Stock\s*/i, "").trim();
+                
+                let isMatch = cleanPlant.includes(cleanQuery);
+                
+                // Also check delivery/scrap numbers if a booking exists
+                if (!isMatch && hasBooking) {
+                    const dNum = String(hasBooking.deliveryNumber || "");
+                    const sNum = String(hasBooking.scrapNumber || "");
+                    if (dNum.includes(currentSearchQuery) || sNum.includes(currentSearchQuery)) {
+                        isMatch = true;
+                    }
+                }
+                
+                if (isMatch) {
+                    btn.classList.add("search-highlight");
+                }
             }
             
             btn.addEventListener("click", (e) => {
@@ -929,6 +953,38 @@ function logUserAction(actionType, details) {
         fetch(`${APPS_SCRIPT_URL}?action=logAction&payload=${payloadStr}`, { method: 'GET' })
             .catch(e => console.error("Logging error", e));
     } catch(e) {}
+}
+
+// Calendar Search Logic
+function handleCalendarSearch() {
+    const searchInput = document.getElementById("calendar-search");
+    const resultsCount = document.getElementById("search-results-count");
+    if (!searchInput) return;
+    
+    currentSearchQuery = searchInput.value.trim();
+    
+    // Perform search by re-rendering
+    renderCalendar();
+    
+    // After render, count matches
+    if (currentSearchQuery && currentSearchQuery.length >= 1) {
+        const matches = document.querySelectorAll(".search-highlight").length;
+        if (resultsCount) {
+            resultsCount.textContent = matches > 0 ? `พบ ${matches} รายการ` : "ไม่พบข้อมูล";
+        }
+    } else {
+        if (resultsCount) resultsCount.textContent = "";
+    }
+}
+
+if (calendarSearch) {
+    calendarSearch.addEventListener("input", handleCalendarSearch);
+    calendarSearch.addEventListener("keyup", (e) => {
+        if (e.key === "Enter") handleCalendarSearch();
+    });
+}
+if (btnSearchCalendar) {
+    btnSearchCalendar.addEventListener("click", handleCalendarSearch);
 }
 
 function showSuccessAnimation() {
