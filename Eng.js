@@ -2,7 +2,7 @@
  * Plant Transfer Calendar Web Application
  * NOTE: Replace APPS_SCRIPT_URL with your actual published Google Apps Script Web App URL
  */
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhSd1MedWS8eznGqZMoNx1MCsfoHNVW33PCEAuWx69Kd0DluAZf6pDIt6mONt7mRLBuA/exec"; 
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwu1iX2QC9ifeb46qShCYQEm5XLRs8KGg1Kmmfq4njtoMciybCoOwiK3Zy_4__XJLcn9Q/exec"; 
 
 // State Management
 let currentDate = new Date(); // Represents the currently viewed month
