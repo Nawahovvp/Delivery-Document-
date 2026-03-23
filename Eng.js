@@ -680,10 +680,12 @@ printToggle.addEventListener("change", async () => {
             renderCalendar();
             logUserAction("Update Print Status", `Set to ${statusVal || 'None'} for ${plantsToUpdate.length} plants`);
             
-            // Trigger animation if turned ON
-            if (isChecked) {
-                showSuccessAnimation();
-            }
+            // Trigger animation and auto-close for both ON and OFF actions
+            showSuccessAnimation();
+            
+            setTimeout(() => {
+                modal.classList.remove("active");
+            }, 1500);
         } else {
             updateConnectionStatus("Some updates failed", "error");
             printToggle.checked = !isChecked; // Revert
